@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>手写事件代理</title>
+</head>
+<body>
+<!--给ul下的多个li绑定事件，就适合用事件代理，用e.target来确定事件源对象-->
+<ul id="ul-list">
+    <li>11111</li>
+    <li>22222</li>
+    <li>333</li>
+    <li>4444</li>
+</ul>
+<script>
+    function delegateEvent(interfaceEle,selector,type,fn){
+        if(interfaceEle.addEventListener){
+            interfaceEle.addEventListener(type,eventfn) //就调用添加事件，在回调中，设置e.target
+        }else{
+            interfaceEle.attachEvent("on"+type,eventfn)
+        }
+        function eventfn(e){
+            var e=e||window.event;
+            var target= e.target|| e.srcElement;
+            if(matchSelector(target,selector)){
+                if(fn){
+                    fn.call(target,e)
+                }
+            }
+        }
+        function matchSelector(ele,selector){
+            //if use id
+            if(selector.charAt(0)==="#"){
+                return ele.id===selector.slice(1);
+            }
+            if(selector.charAt(0)==="."){
+                return (""+ele.className+"").indexOf(""+selector.slice(1)+"")
+            }
+            return ele.tagName.toLowerCase()===selector.toLowerCase()
+        }
+    }
+    var ulList=document.getElementById("ul-list");
+    delegateEvent(ulList,"li","click", function (e) {
+        console.log(e.target.innerHTML);
+    })
+</script>
+</body>
+</html>

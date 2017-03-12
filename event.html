@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>跨浏览器 事件</title>
+</head>
+<body>
+<div id="parent">
+    <button id="child">子元素事件</button>
+</div>
+<div id="eventUtil">
+    <button id="test-btn">testbtn</button>
+    <button id="btn-add">addEvent</button>
+    <button id="btn-remove">removeEvent</button>
+</div>
+    <script>
+        //事件两个阶段，冒泡（从子节点到根节点）、捕获（从根节点到子节点）
+        //标准浏览器处理事件方式：addEventListener(type,eventFun,bool(true/false))
+        //IE8及以前浏览器处理事件方式：attachEvent('on'+type,eventFun)
+        //type:click,submit,hover,focus等
+        //eventFun：处理事件
+        //bool:是否捕获，true表示捕获，false表示冒泡（一般用这个）
+        //阻止冒泡方式：
+        //标准浏览器： event.stopPropagation();
+        //IE8及以前浏览器：event.cancelBubble=true;
+
+        var parent=document.getElementById("parent"),
+            child=document.getElementById("child");
+        if(window.addEventListener){
+            parent.addEventListener("click",function () {
+                console.log('addEventListener parent div');
+            })
+            child.addEventListener("click", function (e) {
+                console.log(' addEventListener child btn');
+                var event=e||window.event;
+                event.stopPropagation();
+            }) ;// false指冒泡阶段
+        }else if(window.attachEvent){
+            parent.attachEvent("onclick", function () {
+                console.log('attachEvent parent div');
+
+            });
+            child.attachEvent("onclick", function (e) {
+                console.log(' attachEvent child btn');
+                var event=e||window.event;
+                event.cancelBubble=true;
+            })
+        }else{
+            parent.onclick= function () {
+            console.log('onclick parent div');
+        };
+        child.onclick= function () {
+            console.log('onclick child btn');
+        }; //这种不会有冒泡  //ie8执行顺序 ：onclick >attachEvent //标准浏览器执行顺序：addEventListener >onclick
+        }
+//
+
+        //所以可以定义一个跨浏览器事件，和一个阻止冒泡事件
+
+            var eventUtil={
+    //            添加事件
+                addHandler: function (element,type,handler) {
+                    if(window.addEventListener){
+                        element.addEventListener(type,handler,false);
+                    }else if(window.attachEvent){
+                        element.attachEvent("on"+type,handler);
+                    }else{
+                        element["on"+type]=handler
+                    }
+                },
+                //移除事件
+                removeHandler: function (element, type, handler) {
+                    if(window.removeEventListener){
+                        element.removeEventListener(type,handler,false);
+                    }else if(window.detachEvent){
+                        element.detachEvent("on"+type,handler);
+                    }else{
+                        element["on"+type]=null
+                    }
+                }
+                ,getEvent: function (event) {
+                    return event?event:window.event;
+                }
+                //获取事件类型
+                ,getType: function (event) {
+                    return event.type;
+                }
+                //获得事件对象
+                ,getElement: function (event) {
+                    return event.target||event.srcElement;
+                }
+                //阻止默认行为
+                ,preventDefault: function (event) {
+                    if(event.preventDefault){
+                        event.preventDefault()
+                    }else{
+                        event.returnValue=false;
+                    }
+                }
+                //阻止冒泡
+                ,stopPropagation: function (event) {
+                    if(event.stopPropagation){
+                        event.stopPropagation()
+                    }else{
+                        event.cancelBubble=true;
+                    }
+                }
+            }
+
+        //测试添加事件，移除事件，阻止冒泡等
+        var testBtn=document.getElementById("test-btn");
+        var addEvent=document.getElementById("btn-add");
+        var removeEvent=document.getElementById("btn-remove");
+        var box=document.getElementById("eventUtil");
+
+        eventUtil.addHandler(box,'click', function (e) {
+            eventUtil.preventDefault(e)
+            console.log("box event");
+        })
+
+        eventUtil.addHandler(addEvent,'click',addEventFun);
+        eventUtil.addHandler(removeEvent,'click',removeEventFun);
+
+        function addEventFun(ev){
+            eventUtil.stopPropagation(eventUtil.getEvent(ev));
+            eventUtil.addHandler(testBtn,'click', function (event) {
+                console.log("add event ");
+                var e=eventUtil.getEvent(event);
+                eventUtil.stopPropagation(e)
+            })
+        }
+        function removeEventFun(ev){
+            eventUtil.stopPropagation(eventUtil.getEvent(ev));
+            eventUtil.removeHandler(testBtn,'click', function (event) {
+                console.log("remove event ");
+                var e=eventUtil.getEvent(event);
+                eventUtil.stopPropagation(e)
+            })
+        }
+    </script>
+</body>
+</html>
