@@ -162,6 +162,46 @@ addEventListener child btn
 ````
 调用eventUtil的函数即可
 
+##事件代理
+假设我们有以下代码：
+````
+<ul id="ul-list">
+    <li>11111</li>
+    <li>22222</li>
+    <li>333</li>
+    <li>4444</li>
+</ul>
+````
+我们需要给每个`li`绑定一个事件，假定这个事件就输出`li`的数字
+按照上面的模型，我们会循环绑定事件（如下），或者一个一个绑定
+
+```
+ var ulList=document.getElementById("ul-list");
+ var liList=ulList.children
+ for(var i=0;i<liList.length.i++){
+   liList[i].addEventLister("click",function(){
+        console.log(this.innerHTML)
+   })
+ }
+```
+（ps以上绑定方法其实。。。不太好，详细看闭包原理）<br/>
+
+这么写，有几个缺点：
+*1.循环绑定事件可能会涉及闭包问题
+*2.对于js动态添加的元素，绑定不到
+
+所以，引出事件代理模式
+就是利用事件的event对象的target(ie下用srcElement)，来确定具体绑定到的事件是什么
+比如：
+```
+ulList.addEventListener("click",function(e){
+    e=e||window.event;
+    target=e.target||e.srcElement;
+    console.log(target.innerHTML)
+})
+```
+按照函数式变成的思想，我将事件代理抽成了一个函数，具体想看delegateEvent.html，就不列出来了
+
 
 
 
